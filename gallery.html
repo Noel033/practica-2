@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pratica 2 - Movie Gallery</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f4f4f4;
+      }
+
+      #mainheader {
+        background-color: #333;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+      }
+
+      #mainheader ul {
+        list-style-type: none;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+
+      #mainheader ul li {
+        margin: 0 1rem;
+      }
+
+      #mainheader ul li a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
+
+      #genreFilter {
+        padding: 0.5rem;
+        font-size: 1rem;
+        width: 200px;
+      }
+
+      main {
+        padding: 2rem;
+      }
+
+      #movie-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        justify-content: center;
+      }
+
+      .movie-card {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        height: 400px;
+      }
+
+      .movie-card:hover {
+        transform: scale(1.05);
+      }
+
+      .movie-card img {
+        width: 150px;
+        height: 225px;
+        object-fit: cover;
+        margin-bottom: 0.5rem;
+      }
+
+      .movie-card h3 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
+      }
+
+      .movie-card p {
+        font-size: 0.8rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+        display: -webkit-box;
+
+        -webkit-box-orient: vertical;
+      }
+      .favorite-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        border-radius: 3px;
+      }
+
+      .favorite-btn:hover {
+        background-color: #0056b3;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      footer {
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        padding: 1rem;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+      }
+
+      @media (max-width: 768px) {
+        #movie-grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="mainheader">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="gallery.html">Movie Gallery</a></li>
+      </ul>
+      <select id="genreFilter">
+        <option value="all">All Genres</option>
+      </select>
+    </header>
+    <main>
+      <div id="movie-grid"></div>
+    </main>
+    <div id="movieModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+    <footer>
+      <p>&copy; 2024 Noel Movie Finder. Todos los derechos reservados.</p>
+    </footer>
+    <script>
+      const movieGrid = document.getElementById("movie-grid");
+      const genreFilter = document.getElementById("genreFilter");
+      const modal = document.getElementById("movieModal");
+      const modalContent = document.getElementById("modalContent");
+      const closeBtn = document.getElementsByClassName("close")[0];
+
+      const movies = [
+        {
+          title: "Los Simpson",
+          description:
+            "El día a día de una peculiar familia formada por Homer, Marge, Bart, Maggie y Lisa Simpson y otros divertidos personajes!",
+          genre: "Comedia",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/vH0Mghb0lNJ5k7EpDwI7iJV7qaO.jpg",
+        },
+        {
+          title: "Jujutsu Kaisen",
+          description:
+            "Dificultades, arrepentimiento, vergüenza… Los sentimientos negativos de los humanos se convierten en Maldiciones que nos acechan en nuestra vida diaria.",
+          genre: "Anime",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/fHpKWq9ayzSk8nSwqRuaAUemRKh.jpg",
+        },
+
+        {
+          title: "SPY x FAMILY ",
+          description:
+            "Operación Strix. La idea es crear una familia en una semana para infiltrarse en las reuniones sociales organizadas por la escuela de élite a la que asiste el hijo de Desmond",
+          genre: "Anime",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/3r4LYFuXrg3G8fepysr4xSLWnQL.jpg",
+        },
+        {
+          title: "Monster",
+          description:
+            "El doctor Kenzo Tenma es un prometedor neurocirujano japonés que ejerce en el Eisler Memorial Hospital de Dusseldorf. Lo tiene todo en la vida; un trabajo que le apasiona y en el que demuestra una habilidad increíble, y una novia rica y guapa",
+          genre: "Anime",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/eC280XJiIvDctPA1dJkrkRpApnm.jpg",
+        },
+        {
+          title: "Al rescate de Fondo de Bikini",
+          description:
+            "Cuando Fondo de Bikini es arrastrado fuera del mar, la ardilla científica Arenita Mejillas y su amigo Bob Esponja se embarcan rumbo a Texas para salvar su ciudad.",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/q8LdEq7DyeeHRWjhy8USd1CmesU.jpg",
+          genre: "Comedia",
+        },
+        {
+          title: "Destino terror ",
+          description:
+            "Destino Terror fue un docurreality de fenómenos paranormales emitido desde el 26 de octubre de 2019 hasta el 13 de enero de 2023 a través de Travel Channel.​​​",
+          genre: "Terror",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/8jpJTYwqiKGMZNpLll8kjWnydqz.jpg",
+        },
+        {
+          title: "Dracula ",
+          description:
+            "Dracula is an Italian 2 part TV-miniseries, directed by Roger Young. It is based on the 1897 novel of the same name by Bram Stoker, though it updates the events of the novel to the present day.",
+          genre: "Terror",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/sZPKioNbx6mSu0rG8P6M8TkjRfA.jpg",
+        },
+
+        {
+          title: "Naruto Shippuden",
+          description:
+            "Han pasado dos años desde que acabó la Cuarta Guerra Shinobi y con ello la última pelea entre Naruto y Sasuke. Konoha se encuentra en paz,",
+          genre: "Anime",
+          image:
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/bAQ8O5Uw6FedtlCbJTutenzPVKd.jpg",
+        },
+      ];
+
+      function displayMovies(filter = "all") {
+        movieGrid.innerHTML = "";
+        movies.forEach((movie) => {
+          if (filter === "all" || movie.genre === filter) {
+            const movieCard = document.createElement("div");
+            movieCard.classList.add("movie-card");
+            movieCard.innerHTML = `
+              <img src="${movie.image}" alt="${movie.title}">
+              <h3>${movie.title}</h3>
+              <p>${movie.description}</p>
+              <button class="favorite-btn">Favorite</button>
+            `;
+            movieCard
+              .querySelector(".favorite-btn")
+              .addEventListener("click", toggleFavorite);
+            movieCard.addEventListener("click", () => showMovieDetails(movie));
+            movieGrid.appendChild(movieCard);
+          }
+        });
+      }
+      function toggleFavorite(e) {
+        e.stopPropagation();
+        const button = e.target;
+        button.textContent =
+          button.textContent === "Favorite" ? "Favorited" : "Favorite";
+        button.style.backgroundColor =
+          button.textContent === "Favorited" ? "#dc3545" : "#007bff";
+      }
+
+      function showMovieDetails(movie) {
+        modalContent.innerHTML = `
+          <h2>${movie.title}</h2>
+          <img src="${movie.image}" alt="${movie.title}" style="width: 200px; height: 300px; object-fit: cover;">
+          <p>${movie.description}</p>
+          <p>Genre: ${movie.genre}</p>
+        `;
+        modal.style.display = "block";
+      }
+
+      closeBtn.onclick = function () {
+        modal.style.display = "none";
+      };
+
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      function populateGenreFilter() {
+        const genres = [...new Set(movies.map((movie) => movie.genre))];
+        genres.forEach((genre) => {
+          const option = document.createElement("option");
+          option.value = genre;
+          option.textContent = genre;
+          genreFilter.appendChild(option);
+        });
+      }
+
+      genreFilter.addEventListener("change", (e) => {
+        displayMovies(e.target.value);
+      });
+
+      populateGenreFilter();
+      displayMovies();
+    </script>
+  </body>
+</html>
